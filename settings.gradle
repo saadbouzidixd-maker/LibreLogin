@@ -3,6 +3,7 @@ pluginManagement {
         maven {
             url = uri("https://repo.kyngs.xyz/gradle-plugins")
         }
+        mavenLocal()
         gradlePluginPortal()
     }
 }

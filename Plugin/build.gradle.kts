@@ -2,7 +2,9 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("java")
-    id("io.github.goooler.shadow") version "8.1.8"
+    // goooler fork (8.1.8) is broken on Gradle 9+; gradleup 9.x is the maintained fork
+    // with ASM support for Java 25 class files (velocity-api 4 ships major version 69).
+    id("com.gradleup.shadow") version "9.6.1"
     id("net.kyori.blossom").version("1.3.1")
     id("java-library")
     id("xyz.kyngs.libby.plugin").version("1.2.1")
@@ -102,7 +104,7 @@ tasks.withType<ShadowJar> {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -120,27 +122,16 @@ libby {
     noChecksumDependency("com.github.retrooper.packetevents:.*:.*")
 }
 
-configurations.all {
-    // I hate this, but it needs to be done as bungeecord does not support newer versions of adventure, and packetevents includes it
-    resolutionStrategy {
-        force("net.kyori:adventure-text-minimessage:4.14.0")
-        force("net.kyori:adventure-text-serializer-gson:4.14.0")
-        force("net.kyori:adventure-text-serializer-legacy:4.14.0")
-        force("net.kyori:adventure-text-serializer-json:4.14.0")
-        force("net.kyori:adventure-api:4.14.0")
-        force("net.kyori:adventure-nbt:4.14.0")
-        force("net.kyori:adventure-key:4.14.0")
-    }
-}
-
 dependencies {
     //API
     implementation(project(":API"))
 
     //Velocity
-    annotationProcessor("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
-    compileOnly("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
-    compileOnly("com.velocitypowered:velocity-proxy:3.2.0-SNAPSHOT-277")
+    // NOTE: The proxy configuration (player info forwarding) is accessed via reflection because
+    // PaperMC no longer publishes the velocity-proxy artifact, and the public ProxyConfig API
+    // does not expose the forwarding mode/secret.
+    annotationProcessor("com.velocitypowered:velocity-api:4.2.1-SNAPSHOT")
+    compileOnly("com.velocitypowered:velocity-api:4.2.1-SNAPSHOT")
 
     //MySQL
     libby("org.mariadb.jdbc:mariadb-java-client:3.5.1")
@@ -166,7 +157,7 @@ dependencies {
     libby("org.bouncycastle:bcprov-jdk18on:1.80")
     libby("org.apache.commons:commons-email:1.6.0")
     // DO NOT UPGRADE TO 4.15.0 OR ABOVE BEFORE TESTING WATERFALL AND BUNGEECORD COMPATIBILITY!!!
-    libby("net.kyori:adventure-text-minimessage:4.14.0")
+    libby("net.kyori:adventure-text-minimessage:5.2.0")
     libby("com.github.kyngs:LegacyMessage:0.2.0")
 
     //Geyser
@@ -175,7 +166,7 @@ dependencies {
     compileOnly("net.luckperms:api:5.4")
 
     //Bungeecord
-    compileOnly("net.md-5:bungeecord-api:1.21-R0.1-SNAPSHOT")
+    compileOnly("net.md-5:bungeecord-api:26.1-R0.1-SNAPSHOT")
     compileOnly("com.github.ProxioDev.ValioBungee:RedisBungee-Bungee:0.12.5")
     libby("net.kyori:adventure-platform-bungeecord:4.1.2")
 
@@ -199,7 +190,7 @@ dependencies {
     implementation("xyz.kyngs.libby:libby-paper:1.6.0")
 
     //NanoLimboPlugin
-    compileOnly("com.github.bivashy.NanoLimboPlugin:api:1.0.8")
+    compileOnly("com.github.bivashy.NanoLimboPlugin:api:1.0.15")
 }
 
 tasks.withType<ProcessResources> {

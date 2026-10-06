@@ -61,6 +61,11 @@ public class NanoLimboConfig implements LimboConfig {
     }
 
     @Override
+    public boolean isSecureProfile() {
+        return false;
+    }
+
+    @Override
     public long getReadTimeout() {
         return Duration.ofSeconds(30).toMillis();
     }
@@ -148,5 +153,15 @@ public class NanoLimboConfig implements LimboConfig {
     @Override
     public int getWorkerGroupSize() {
         return 4; // Default value
+    }
+
+    @Override
+    public double getInterval() {
+        return -1.0; // Default value, traffic limits are disabled
+    }
+
+    @Override
+    public double getMaxPacketRate() {
+        return -1.0; // Default value, traffic limits are disabled
     }
 }

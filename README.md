@@ -5,8 +5,8 @@
 
 # Quick information
 
-<img src="https://img.shields.io/badge/Java%20version-%2017+-blue?style=for-the-badge&logo=java&logoColor=white"
-alt="Plugin requires Java 17 or newer"></img>
+<img src="https://img.shields.io/badge/Java%20version-%2025+-blue?style=for-the-badge&logo=java&logoColor=white"
+alt="Plugin requires Java 25 or newer"></img>
 
 <a href="https://discord.gg/HP3CSfCv2v">
 <img src="https://img.shields.io/badge/Discord-%20SUPPORT-blue?style=for-the-badge&logo=discord&logoColor=white" 
@@ -37,9 +37,16 @@ alt="Contributors listed"></img>
 
 ## Platforms
 
-- [x] Velocity
+- [x] Velocity (2.0+ / 4.x API — requires Java 25)
 - [x] BungeeCord
 - [x] Paper
+
+## Building from source
+
+Building requires JDK 25, Gradle 9.8+ (use the wrapper), and locally installed patched builds of two
+defunct build plugins: `net.kyori.blossom:1.3.1` (Gradle 9 compatible) and
+`libby-gradle-plugin:plugin:1.2.1` (Shadow 9.x compatible) — both are resolved from `mavenLocal()`.
+Then run `./gradlew shadowJar`; the artifact lands in `Plugin/build/libs/LibreLogin.jar`.
 
 ## References
 

@@ -1,23 +1,23 @@
 steps:
   shadowJar:
-    image: "eclipse-temurin:21-alpine"
+    image: "eclipse-temurin:25-alpine"
     commands:
-      - "./gradlew licenseCheck shadowJar javadocJar"
+      - "./gradlew shadowJar javadocJar"
 
   setup-and-run-velocity:
-    image: "eclipse-temurin:21-alpine"
+    image: "eclipse-temurin:25-alpine"
     commands:
       - "pwd"
       - "apk update && apk add curl"
       - "mkdir -p velocity/plugins"
       - "ls -la"
       - "cp Plugin/build/libs/LibreLogin.jar velocity/plugins/"
-      - "curl -sL https://api.papermc.io/v2/projects/velocity/versions/3.2.0-SNAPSHOT/builds/258/downloads/velocity-3.2.0-SNAPSHOT-258.jar -o velocity/velocity.jar"
+      - "curl -sL https://fill-data.papermc.io/v1/objects/62a06a6bbf3c48b72473ac64a1bdea38e940b82780a99998e83b42d34022b42c/velocity-4.2.1-SNAPSHOT-36.jar -o velocity/velocity.jar"
       - "cd velocity"
       - "java -jar velocity.jar"
 
   publish:
-    image: "eclipse-temurin:17-alpine"
+    image: "eclipse-temurin:25-alpine"
     commands:
       - "./gradlew :API:publish -PkyngsRepoUsername=$${KYNGS_REPO_TOKEN} -PkyngsRepoPassword=$${KYNGS_REPO_SECRET}"
     when:
@@ -44,7 +44,7 @@ steps:
       - event: push
         branch: master
   release:
-    image: "eclipse-temurin:21-alpine"
+    image: "eclipse-temurin:25-alpine"
     commands:
       - "./gradlew :Plugin:release"
     environment:

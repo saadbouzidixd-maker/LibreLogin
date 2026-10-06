@@ -70,7 +70,7 @@ public class BungeeCordLibreLogin extends AuthenticLibreLogin<ProxiedPlayer, Ser
     protected void enable() {
         this.adventure = BungeeAudiences.create(bootstrap);
         this.serializer = BungeeComponentSerializer.of(
-                GsonComponentSerializer.builder().downsampleColors().emitLegacyHoverEvent().build(),
+                GsonComponentSerializer.colorDownsamplingGson(),
                 LegacyComponentSerializer.builder().flattener(adventure.flattener()).build()
         );
 
