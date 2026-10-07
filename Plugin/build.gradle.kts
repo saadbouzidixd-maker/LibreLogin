@@ -1,13 +1,18 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.compile.JavaCompile
 
 plugins {
     id("java")
     // goooler fork (8.1.8) is broken on Gradle 9+; gradleup 9.x is the maintained fork
     // with ASM support for Java 25 class files (velocity-api 4 ships major version 69).
     id("com.gradleup.shadow") version "9.6.1"
-    id("net.kyori.blossom").version("1.3.1")
     id("java-library")
-    id("xyz.kyngs.libby.plugin").version("1.2.1")
+    // Built from the vendored sources in ../buildSrc: the artifact this plugin id resolves to
+    // (libby-gradle-plugin:plugin:1.2.1) is 404 on every public repository, so it used to be
+    // installed by hand into ~/.m2 and the build only worked on that one machine.
+    id("xyz.kyngs.libby.plugin")
     id("xyz.kyngs.mcupload.plugin").version("0.3.4")
 }
 
@@ -72,9 +77,42 @@ repositories {
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
 }
 
-blossom {
-    replaceToken("@version@", version)
+// Blossom (net.kyori.blossom) 1.3.1 still uses the JavaPluginConvention that Gradle 9 removed,
+// and its 2.x rewrite dropped replaceToken(), so the only token this build needs
+// (@version@ in VelocityBootstrap) is substituted by a plain copy of the source tree.
+val replaceVersionTokens = tasks.register<Copy>("replaceVersionTokens") {
+    from("src/main/java")
+    into(layout.buildDirectory.dir("generated/version-tokens"))
+    filteringCharset = "UTF-8"
+    filter(ReplaceTokens::class, "tokens" to mapOf("version" to version.toString()))
 }
+
+sourceSets {
+    main {
+        // Replaces the default src/main/java with the same tree, tokens substituted.
+        java.setSrcDirs(listOf(replaceVersionTokens))
+    }
+}
+
+// Single source of truth for the package relocations: Shadow applies them to the libraries
+// bundled into the jar, and Libby has to apply the same ones to the libraries it downloads
+// at runtime, otherwise the two sets of classes end up in different packages.
+val libraryRelocations = mapOf(
+    "co.aikar.acf" to "xyz.kyngs.librelogin.lib.acf",
+    "com.github.benmanes.caffeine" to "xyz.kyngs.librelogin.lib.caffeine",
+    "com.typesafe.config" to "xyz.kyngs.librelogin.lib.hocon",
+    "com.zaxxer.hikari" to "xyz.kyngs.librelogin.lib.hikari",
+    "org.mariadb" to "xyz.kyngs.librelogin.lib.mariadb",
+    "org.bstats" to "xyz.kyngs.librelogin.lib.metrics",
+    "org.intellij" to "xyz.kyngs.librelogin.lib.intellij",
+    "org.jetbrains" to "xyz.kyngs.librelogin.lib.jetbrains",
+    "io.leangen.geantyref" to "xyz.kyngs.librelogin.lib.reflect",
+    "org.spongepowered.configurate" to "xyz.kyngs.librelogin.lib.configurate",
+    "net.byteflux.libby" to "xyz.kyngs.librelogin.lib.libby",
+    "org.postgresql" to "xyz.kyngs.librelogin.lib.postgresql",
+    "com.github.retrooper.packetevents" to "xyz.kyngs.librelogin.lib.packetevents.api",
+    "io.github.retrooper.packetevents" to "xyz.kyngs.librelogin.lib.packetevents.platform",
+)
 
 tasks.withType<ShadowJar> {
     archiveFileName.set("LibreLogin.jar")
@@ -86,20 +124,7 @@ tasks.withType<ShadowJar> {
         exclude(dependency("com.google.protobuf:.*:.*"))
     }
 
-    relocate("co.aikar.acf", "xyz.kyngs.librelogin.lib.acf")
-    relocate("com.github.benmanes.caffeine", "xyz.kyngs.librelogin.lib.caffeine")
-    relocate("com.typesafe.config", "xyz.kyngs.librelogin.lib.hocon")
-    relocate("com.zaxxer.hikari", "xyz.kyngs.librelogin.lib.hikari")
-    relocate("org.mariadb", "xyz.kyngs.librelogin.lib.mariadb")
-    relocate("org.bstats", "xyz.kyngs.librelogin.lib.metrics")
-    relocate("org.intellij", "xyz.kyngs.librelogin.lib.intellij")
-    relocate("org.jetbrains", "xyz.kyngs.librelogin.lib.jetbrains")
-    relocate("io.leangen.geantyref", "xyz.kyngs.librelogin.lib.reflect")
-    relocate("org.spongepowered.configurate", "xyz.kyngs.librelogin.lib.configurate")
-    relocate("net.byteflux.libby", "xyz.kyngs.librelogin.lib.libby")
-    relocate("org.postgresql", "xyz.kyngs.librelogin.lib.postgresql")
-    relocate("com.github.retrooper.packetevents", "xyz.kyngs.librelogin.lib.packetevents.api")
-    relocate("io.github.retrooper.packetevents", "xyz.kyngs.librelogin.lib.packetevents.platform")
+    libraryRelocations.forEach { (from, to) -> relocate(from, to) }
 }
 
 java {
@@ -120,6 +145,8 @@ libby {
 
     // Often redeploys the same version, so calculating checksum causes false flags
     noChecksumDependency("com.github.retrooper.packetevents:.*:.*")
+
+    libraryRelocations.forEach { (from, to) -> relocate(from, to) }
 }
 
 dependencies {

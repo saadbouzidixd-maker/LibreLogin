@@ -43,10 +43,16 @@ alt="Contributors listed"></img>
 
 ## Building from source
 
-Building requires JDK 25, Gradle 9.8+ (use the wrapper), and locally installed patched builds of two
-defunct build plugins: `net.kyori.blossom:1.3.1` (Gradle 9 compatible) and
-`libby-gradle-plugin:plugin:1.2.1` (Shadow 9.x compatible) — both are resolved from `mavenLocal()`.
-Then run `./gradlew shadowJar`; the artifact lands in `Plugin/build/libs/LibreLogin.jar`.
+Building requires JDK 25 and Gradle 9.8+ (use the wrapper). No local repository setup is needed:
+the two defunct build plugins this project used to depend on are gone (the `@version@` token is now
+substituted by a plain Gradle task, and the libby plugin is vendored in [buildSrc](buildSrc) — see
+[buildSrc/README.md](buildSrc/README.md)).
+
+```bash
+./gradlew shadowJar
+```
+
+The artifact lands in `Plugin/build/libs/LibreLogin.jar`.
 
 ## References
 
